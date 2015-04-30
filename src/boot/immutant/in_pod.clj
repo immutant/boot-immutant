@@ -1,0 +1,31 @@
+(ns boot.immutant.in-pod
+  (:require boot.aether
+            [boot.util :as util]
+            [cemerick.pomegranate.aether :as aether]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [immutant.deploy-tools.war :as war]))
+
+(defn assoc-if-val [m k v]
+  (if-not (nil? v) (assoc m k v) m))
+
+(defn war-path [{:keys [destination name]}]
+  (.getAbsolutePath
+    (io/file (or (war/resolve-target-path destination) "target")
+      (str name ".war"))))
+
+(defn war-machine [options]
+  (.getAbsolutePath
+    (war/create-war (war-path options)
+      (assoc options
+        :dev? (:dev options)
+        :warn-fn (fn [& msg] (util/warn (str (str/join " " msg) "\n")))
+        :dependency-resolver #(map io/file (boot.aether/resolve-dependency-jars %))
+        :dependency-hierarcher #(aether/dependency-hierarchy (:dependencies %)
+                                  (boot.aether/resolve-dependencies* %))
+        :root (System/getProperty "user.dir")
+        :nrepl (-> {:start? (:nrepl-start options)}
+                 (assoc-if-val :port (:nrepl-port options))
+                 (assoc-if-val :host (:nrepl-host options))
+                 (assoc-if-val :port-file (:nrepl-port-file options))
+                 (assoc-if-val :options (:nrepl-options options)))))))
