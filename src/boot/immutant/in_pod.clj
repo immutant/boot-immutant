@@ -9,9 +9,9 @@
 (defn assoc-if-val [m k v]
   (if-not (nil? v) (assoc m k v) m))
 
-(defn war-path [{:keys [destination name]}]
+(defn war-path [{:keys [destination name target-path]}]
   (.getAbsolutePath
-    (io/file (or (war/resolve-target-path destination) "target")
+    (io/file (or (war/resolve-target-path destination) target-path)
       (str name ".war"))))
 
 (defn war-machine [options]

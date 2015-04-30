@@ -39,12 +39,12 @@
     (pod/with-call-worker
       (boot.aether/resolve-dependency-jars ~env))))
 
-(defn ^:private gen-uberjar []
+(defn ^:private gen-uberjar [env]
   ;; TODO: it would be nice if the jar task took an absolute path
   (let [fname "project-uber.jar"]
     (boot/boot (built-in/uber) (built-in/jar :file fname))
     (.getAbsolutePath
-      (doto (io/file (str "target/" fname))
+      (doto (io/file (:target-path env) fname)
         (.deleteOnExit)))))
 
 (deftask immutant-war
@@ -53,7 +53,7 @@
    d dev                  bool  "Generate a 'dev' war [false]"
    c context-path    PATH str   "Deploy to this context path [nil]"
    v virtual-host    HOST [str] "Deploy to the named host defined in the WildFly config [nil]"
-   o destination     DIR  str   "Write the generated war to DIR [\"./target\"]"
+   o destination     DIR  str   "Write the generated war to DIR [(:target-path (get-env))]"
    n name            NAME str   "Override the name of the war (sans the .war suffix) [\"project\"]"
    r resource-path   PATH [str] "Paths to file trees to include in the top level of the war [nil]"
    _ nrepl-host      HOST str   "Host for nrepl to bind to [\"localhost\"]"
@@ -69,13 +69,13 @@
           war-path (pod/call-in* @pod
                      ['boot.immutant.in-pod/war-machine
                       (-> env
-                        (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy])
+                        (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy :target-path])
                         (merge *opts*)
                         (assoc
-                          :name (or name "project")
+                          :name        (or name "project")
                           :nrepl-start (if (contains? *opts* :nrepl-start) nrepl-start dev)
-                          :classpath (when dev (gen-classpath env))
-                          :uberjar (when-not dev (gen-uberjar))))])]
+                          :classpath   (when dev (gen-classpath env))
+                          :uberjar     (when-not dev (gen-uberjar env))))])]
       (util/info
         (format "Immutant war written to %s\n" war-path)))
     fileset))
