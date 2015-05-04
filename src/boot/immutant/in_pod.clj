@@ -4,6 +4,7 @@
             [cemerick.pomegranate.aether :as aether]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [fntest.core :as fntest]
             [immutant.deploy-tools.war :as war]))
 
 (defn assoc-if-val [m k v]
@@ -14,7 +15,10 @@
     (io/file (or (war/resolve-target-path destination) target-path)
       (str name ".war"))))
 
-(defn war-machine [options]
+(defn root-dir []
+  (System/getProperty "user.dir"))
+
+(defn build-war [options]
   (.getAbsolutePath
     (war/create-war (war-path options)
       (assoc options
@@ -23,9 +27,26 @@
         :dependency-resolver #(map io/file (boot.aether/resolve-dependency-jars %))
         :dependency-hierarcher #(aether/dependency-hierarchy (:dependencies %)
                                   (boot.aether/resolve-dependencies* %))
-        :root (System/getProperty "user.dir")
+        :root (root-dir)
         :nrepl (-> {:start? (:nrepl-start options)}
                  (assoc-if-val :port (:nrepl-port options))
                  (assoc-if-val :host (:nrepl-host options))
                  (assoc-if-val :port-file (:nrepl-port-file options))
                  (assoc-if-val :options (:nrepl-options options)))))))
+
+(defn run-tests [options]
+  (apply
+    fntest/test-in-container
+    (str "test-project.war")
+    (root-dir)
+    (-> options
+      (assoc
+        :jboss-home (:wildfly-home options)
+        :modes fntest/default-modes
+        :output-fns {:error util/fail
+                     :warn  util/warn
+                     :info  util/info})
+      (cond->
+          (:cluster options) (update-in [:modes] conj :domain)
+          (:debug options)   (update-in [:modes] conj :debug))
+      (->> (mapcat identity)))))
