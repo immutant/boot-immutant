@@ -10,28 +10,16 @@
             [boot.from.backtick :as bt])
   (:import java.util.Properties))
 
-(defn ^:private load-properties [resource-name]
-  (doto (Properties.)
-    (.load (-> resource-name io/resource io/reader))))
+(defn ^:private load-data [resource-name]
+  (-> resource-name io/resource slurp read-string))
 
-(def ^:private versions
-  (delay
-    (let [version-props (load-properties "versions.properties")
-          pom-props (load-properties "META-INF/maven/boot-immutant/boot-immutant/pom.properties")]
-      (into
-        {:boot-immutant (.getProperty pom-props "version")}
-        (for [k (.stringPropertyNames version-props)]
-          [(keyword k) (.getProperty version-props k)])))))
-
+(defn ^:private in-pod-dependencies []
+  (conj (load-data "in-pod-dependencies.edn") ['boot/aether boot/*boot-version*]))
 
 (def ^:private pod
   (delay
     (pod/make-pod
-      (assoc pod/env
-        :dependencies [['org.immutant/deploy-tools (:deploy-tools @versions)]
-                       ['org.immutant/fntest       (:fntest @versions)]
-                       ['boot-immutant             (:boot-immutant @versions)]
-                       ['boot/aether               boot/*boot-version*]]))))
+      (assoc pod/env :dependencies (in-pod-dependencies)))))
 
 (defn ^:private gen-classpath
   [{:keys [source-paths resource-paths] :as env}]
