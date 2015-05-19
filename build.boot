@@ -5,12 +5,12 @@
 
 (require
   '[boot.util :as util]
-  '[adzerk.bootlaces :as laces]
+  '[adzerk.bootlaces :refer :all :exclude [build-jar] :as laces]
   '[clojure.java.io :as io])
 
 (def +version+ "1.0.0-SNAPSHOT")
 
-(laces/bootlaces! +version+)
+(bootlaces! +version+)
 
 (task-options!
   pom {:project     'boot-immutant
