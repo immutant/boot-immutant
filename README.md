@@ -10,7 +10,7 @@ applications to a WildFly container.
 
 The current version is:
 
-    [boot-immutant "1.0.0-SNAPSHOT"]
+    [boot-immutant "0.1.0"]
 
 ## Usage
 
