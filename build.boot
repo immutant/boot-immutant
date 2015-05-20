@@ -8,7 +8,7 @@
   '[adzerk.bootlaces :refer :all :exclude [build-jar] :as laces]
   '[clojure.java.io :as io])
 
-(def +version+ "0.1.0")
+(def +version+ "0.2.0-SNAPSHOT")
 
 (bootlaces! +version+)
 
@@ -23,8 +23,8 @@
 
 (def in-pod-dependencies
   [['boot-immutant             +version+]
-   ['org.immutant/deploy-tools "2.0.5-SNAPSHOT"]
-   ['org.immutant/fntest       "2.0.5-SNAPSHOT"]])
+   ['org.immutant/deploy-tools "2.0.5"]
+   ['org.immutant/fntest       "2.0.5"]])
 
 (deftask write-pod-dependencies []
   (with-pre-wrap fileset
