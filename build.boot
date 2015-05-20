@@ -8,7 +8,7 @@
   '[adzerk.bootlaces :refer :all :exclude [build-jar] :as laces]
   '[clojure.java.io :as io])
 
-(def +version+ "0.2.0")
+(def +version+ "0.3.0-SNAPSHOT")
 
 (bootlaces! +version+)
 
