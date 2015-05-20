@@ -35,3 +35,5 @@
       (-> fileset (add-resource tgt) commit!))))
 
 (deftask build-jar [] (comp (write-pod-dependencies) (laces/build-jar)))
+
+(deftask release [] (comp (write-pod-dependencies) (pom) (jar) (push-release)))
