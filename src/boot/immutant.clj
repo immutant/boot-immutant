@@ -51,7 +51,7 @@
 
 (defn ^:private war-machine [{:keys [init-fn name nrepl-start nrepl-port-file dev] :as opts}]
   (when-not init-fn
-    (util/warn "No :init-fn specified, no app initialization will be performed in-container.\n"))
+    (throw (Exception. "No :init-fn specified!")))
   (let [env (boot/get-env)
         _ (ensure-dir (:target-path env))
         war-path (pod/call-in* @pod
