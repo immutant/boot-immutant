@@ -103,7 +103,7 @@
    i init-fn       FN   sym   "The 'main' function to call on deploy [nil]"
    r resource-path PATH [str] "Paths to file trees to include in the top level of the war [nil]"]
   ;; TODO: support test selection? log level?
-  (let [tmp (boot/temp-dir!)
+  (let [tmp (boot/tmp-dir!)
         war-name "project-test"
         war-file (io/file tmp (str war-name ".war"))]
     (boot/with-pre-wrap fileset
