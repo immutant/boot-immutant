@@ -1,5 +1,5 @@
 (set-env!
-  :dependencies '[[org.clojure/clojure "1.6.0" :scope "provided"]
+  :dependencies '[[org.clojure/clojure "1.7.0" :scope "provided"]
                   [adzerk/bootlaces "0.1.11" :scope "test"]]
   :resource-paths #{"src" "resources"})
 
@@ -23,8 +23,8 @@
 
 (def in-pod-dependencies
   [['boot-immutant             +version+]
-   ['org.immutant/deploy-tools "2.0.6"]
-   ['org.immutant/fntest       "2.0.7"]])
+   ['org.immutant/deploy-tools "2.1.0"]
+   ['org.immutant/fntest       "2.0.10"]])
 
 (deftask write-pod-dependencies []
   (with-pre-wrap fileset
