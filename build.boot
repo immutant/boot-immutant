@@ -1,6 +1,6 @@
 (set-env!
   :dependencies '[[org.clojure/clojure "1.7.0" :scope "provided"]
-                  [adzerk/bootlaces "0.1.11" :scope "test"]]
+                  [adzerk/bootlaces "0.1.13" :scope "test"]]
   :resource-paths #{"src" "resources"})
 
 (require
@@ -8,7 +8,7 @@
   '[adzerk.bootlaces :refer :all :exclude [build-jar] :as laces]
   '[clojure.java.io :as io])
 
-(def +version+ "0.5.0")
+(def +version+ "0.6.0-SNAPSHOT")
 
 (bootlaces! +version+)
 
@@ -37,3 +37,5 @@
 (deftask build-jar [] (comp (write-pod-dependencies) (laces/build-jar)))
 
 (deftask release [] (comp (write-pod-dependencies) (pom) (jar) (push-release)))
+
+(deftask snapshot [] (comp (write-pod-dependencies) (pom) (jar) (push-snapshot)))

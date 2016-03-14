@@ -31,7 +31,7 @@
 (defn ^:private gen-uberjar [env]
   ;; TODO: it would be nice if the jar task took an absolute path
   (let [fname "project-uber.jar"]
-    (boot/boot (built-in/uber) (built-in/jar :file fname))
+    (boot/boot (built-in/uber) (built-in/jar :file fname) (built-in/target))
     (.getAbsolutePath
       (doto (io/file (:target-path env) fname)
         (.deleteOnExit)))))
