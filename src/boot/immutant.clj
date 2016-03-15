@@ -4,6 +4,7 @@
             [boot.util :as util]
             [boot.task.built-in :as built-in]
             [boot.tmpdir :as tmpd]
+            [boot.from.digest :as digest]
             [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -28,19 +29,12 @@
     (pod/with-call-worker
       (boot.aether/resolve-dependency-jars ~env))))
 
-(defn ^:private gen-uberjar [env]
-  ;; TODO: it would be nice if the jar task took an absolute path
-  (let [fname "project-uber.jar"]
-    (boot/boot (built-in/uber) (built-in/jar :file fname) (built-in/target))
-    (.getAbsolutePath
-      (doto (io/file (:target-path env) fname)
-        (.deleteOnExit)))))
-
 (defn ^:private print-guide [guide]
   (-> guide name (str "-guide.md") io/resource slurp println))
 
-(defn ^:private ensure-dir [path]
-  (.mkdirs (io/file path)))
+(defn ^:private ensure-dir [f]
+  (.mkdirs (.getParentFile f))
+  f)
 
 (defn ^:private ensure-wildfly-home [wf-home-option]
   (if-let [home (or wf-home-option (System/getenv "WILDFLY_HOME"))]
@@ -49,24 +43,40 @@
       (throw (Exception. (format "WildFly home '%s' does not exist." home))))
     (throw (Exception. "No WildFly home specified. Specify via --wildfly-home or $WILDFLY_HOME."))))
 
-(defn ^:private war-machine [{:keys [init-fn name nrepl-start nrepl-port-file dev] :as opts}]
+(defn ^:private split-path [path]
+  (let [parts (str/split path #"/")]
+    [(str/join "/" (butlast parts)) (last parts)]))
+
+(defn ^:private hashed-name [name file]
+  (str (digest/md5 file) "-" name))
+
+(defn ^:private war-machine [fileset {:keys [init-fn name nrepl-start nrepl-port-file dev] :as opts}]
   (when-not init-fn
     (throw (Exception. "No :init-fn specified!")))
   (let [env (boot/get-env)
-        _ (ensure-dir (:target-path env))
-        war-path (pod/call-in* @pod
-                   ['boot.immutant.in-pod/build-war
-                    (-> env
-                      (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy :target-path])
-                      (merge opts)
-                      (assoc
-                        :nrepl-port-file (when nrepl-port-file (.getAbsolutePath nrepl-port-file))
-                        :name        (or name "project")
-                        :nrepl-start (if (contains? opts :nrepl-start) nrepl-start dev)
-                        :classpath   (when dev (gen-classpath env))
-                        :uberjar     (when-not dev (gen-uberjar env))))])]
-    (util/info
-      (format "Immutant war written to %s\n" war-path))))
+        tmp (boot/tmp-dir!)
+        res (pod/call-in* @pod
+              ['boot.immutant.in-pod/build-war
+               (-> env
+                 (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy :target-path])
+                 (merge opts)
+                 (assoc
+                   :nrepl-port-file (when nrepl-port-file (.getAbsolutePath nrepl-port-file))
+                   :name        (or name "project")
+                   :nrepl-start (if (contains? opts :nrepl-start) nrepl-start dev)
+                   :classpath   (when dev (gen-classpath env))))])
+        existing-output (boot/output-files fileset)]
+    (doseq [[path [type in]]
+            res]
+      (let [file? (= type :path)
+            in' (if file? (io/file in) in)
+            [path-prefix name] (split-path path)
+            name' (if (and file? (.endsWith name ".jar"))
+                    (hashed-name name in')
+                    name)]
+        (when-not (some #(= name' (tmpd/path %)) existing-output)
+          (io/copy in' (ensure-dir (io/file tmp path-prefix name'))))))
+    (-> fileset (boot/add-resource tmp) boot/commit!)))
 
 (deftask immutant-war
   "Generates a war file suitable for deploying to a WildFly container.
@@ -77,8 +87,6 @@
    d dev                  bool  "Generate a 'dev' war [false]"
    c context-path    PATH str   "Deploy to this context path [nil]"
    v virtual-host    HOST [str] "Deploy to the named host defined in the WildFly config [nil]"
-   o destination     DIR  str   "Write the generated war to DIR [(:target-path (get-env))]"
-   n name            NAME str   "Override the name of the war (sans the .war suffix) [\"project\"]"
    r resource-path   PATH [str] "Paths to file trees to include in the top level of the war [nil]"
    _ nrepl-start          bool  "Request nrepl to start [dev]"
    _ nrepl-host      HOST str   "Host for nrepl to bind to [\"localhost\"]"
@@ -87,9 +95,10 @@
    _ nrepl-options   CODE code  "Repl options map [{}]"]
   (boot/with-pre-wrap fileset
     (if guide
-      (print-guide :deployment)
-      (war-machine *opts*))
-    fileset))
+      (do
+        (print-guide :deployment)
+        fileset)
+      (war-machine fileset *opts*))))
 
 (deftask immutant-test
   "Runs a project's tests inside WildFly.

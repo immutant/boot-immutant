@@ -18,21 +18,28 @@
 (defn root-dir []
   (System/getProperty "user.dir"))
 
+(def files->paths
+  (partial map
+    (fn [[k v]]
+      [k (if (instance? java.io.File v)
+           [:path (.getAbsolutePath v)]
+           [:string v])])))
+
 (defn build-war [options]
-  (.getAbsolutePath
-    (war/create-war (war-path options)
-      (assoc options
-        :dev? (:dev options)
-        :warn-fn (fn [& msg] (util/warn (str (str/join " " msg) "\n")))
-        :dependency-resolver #(map io/file (boot.aether/resolve-dependency-jars %))
-        :dependency-hierarcher #(aether/dependency-hierarchy (:dependencies %)
-                                  (boot.aether/resolve-dependencies* %))
-        :root (root-dir)
-        :nrepl (-> {:start? (:nrepl-start options)}
-                 (assoc-if-val :port (:nrepl-port options))
-                 (assoc-if-val :host (:nrepl-host options))
-                 (assoc-if-val :port-file (:nrepl-port-file options))
-                 (assoc-if-val :options (:nrepl-options options)))))))
+  (->> (war/create-war-specs
+         (assoc options
+           :dev? (:dev options)
+           :warn-fn (fn [& msg] (util/warn (str (str/join " " msg) "\n")))
+           :dependency-resolver #(map io/file (boot.aether/resolve-dependency-jars %))
+           :dependency-hierarcher #(aether/dependency-hierarchy (:dependencies %)
+                                     (boot.aether/resolve-dependencies* %))
+           :root (root-dir)
+           :nrepl (-> {:start? (:nrepl-start options)}
+                    (assoc-if-val :port (:nrepl-port options))
+                    (assoc-if-val :host (:nrepl-host options))
+                    (assoc-if-val :port-file (:nrepl-port-file options))
+                    (assoc-if-val :options (:nrepl-options options)))))
+    files->paths))
 
 (defn run-tests [options]
   (apply

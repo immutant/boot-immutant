@@ -23,7 +23,7 @@
 
 (def in-pod-dependencies
   [['boot-immutant             +version+]
-   ['org.immutant/deploy-tools "2.1.0"]
+   ['org.immutant/deploy-tools "2.1.1-SNAPSHOT"]
    ['org.immutant/fntest       "2.0.10"]])
 
 (deftask write-pod-dependencies []
