@@ -58,7 +58,7 @@
         res (pod/call-in* @pod
               ['boot.immutant.in-pod/build-war
                (-> env
-                 (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy :target-path])
+                 (select-keys [:dependencies :repositories :local-repo :offline? :mirrors :proxy])
                  (merge opts)
                  (assoc
                    :nrepl-port-file (when nrepl-port-file (.getAbsolutePath nrepl-port-file))
