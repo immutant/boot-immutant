@@ -23,8 +23,17 @@
 
 (def in-pod-dependencies
   [['boot-immutant             +version+]
-   ['org.immutant/deploy-tools "2.1.1-SNAPSHOT"]
+   ['org.immutant/deploy-tools "2.1.1"]
    ['org.immutant/fntest       "2.0.10"]])
+
+(deftask in-pod-repl []
+  (require 'boot.pod)
+  (let [pod-name "-worker-pod"]
+    (doto (boot.pod/make-pod
+            (assoc boot.pod/env :dependencies (conj in-pod-dependencies
+                                                ['boot/aether *boot-version*])))
+      (.setName pod-name))
+    (repl :pod pod-name)))
 
 (deftask write-pod-dependencies []
   (with-pre-wrap fileset

@@ -5,7 +5,10 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [fntest.core :as fntest]
-            [immutant.deploy-tools.war :as war]))
+            [immutant.deploy-tools.war :as war])
+  (:import java.io.ByteArrayOutputStream
+           java.net.URLClassLoader
+           java.util.Properties))
 
 (defn assoc-if-val [m k v]
   (if-not (nil? v) (assoc m k v) m))
@@ -57,3 +60,24 @@
           (:cluster options) (update-in [:modes] conj :domain)
           (:debug options)   (update-in [:modes] conj :debug))
       (->> (mapcat identity)))))
+
+(defn load-app-properties [war-file]
+  (doto (Properties.)
+    (.load 
+      (io/reader (io/resource "META-INF/app.properties"
+                   (URLClassLoader. (into-array [(-> war-file .toURI .toURL)])))))))
+
+(defn ensure-nrepl [war-file port-file]
+  (let [war-file' (io/file war-file)]
+    (with-open [bos (ByteArrayOutputStream.)]
+      (-> war-file'
+        load-app-properties
+        war/properties->partial-options-map
+        (merge {:nrepl {:start? true
+                        :port-file port-file
+                        :host "localhost"
+                        :port 0}})
+        war/build-descriptor
+        war/map->properties
+        (.store bos ""))
+      (war/replace-file war-file' "META-INF/app.properties" (.toByteArray bos)))))
