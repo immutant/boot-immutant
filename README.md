@@ -6,12 +6,25 @@ applications with a [WildFly](http://wildfly.org/) application server.
 **Note:** you *only* need this plugin if you are deploying your
 applications to a WildFly container.
 
+
 ## Installation
 
 The current version is:
 
     [boot-immutant "0.5.0"]
 
+You'll need to add it as a test-scoped dependency in your
+`build.boot`:
+
+```
+(set-env!
+  :dependencies '[[org.clojure/clojure "1.8.0" :scope "provided"]
+                  [org.immutant/web "2.1.3"]
+                  [boot-immutant "0.5.0" :scope "test"]]
+  :source-paths #{"src" "test"})
+```
+
+                  
 ## Usage
 
 The plugin currently provides two subtasks:
@@ -25,6 +38,7 @@ The plugin currently provides two subtasks:
 * `boot.immutant/test-in-container` - This deploys the application to WildFly, and
   runs the tests. See the [testing guide](resources/testing-guide.md)
   for details.
+
 
 ## License
 

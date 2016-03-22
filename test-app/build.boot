@@ -1,7 +1,7 @@
  (set-env!
-  :dependencies   '[[org.clojure/clojure "1.7.0" :scope "provided"]
-                    [org.immutant/web "2.1.4-SNAPSHOT"]
-                    [boot-immutant "0.6.0-SNAPSHOT" :scope "test"]]
+  :dependencies '[[org.clojure/clojure "1.7.0" :scope "provided"]
+                  [org.immutant/web "2.1.3"]
+                  [boot-immutant "0.6.0-SNAPSHOT" :scope "test"]]
   :source-paths #{"src" "test"})
 
 (require '[boot.immutant :refer :all])
@@ -12,7 +12,7 @@
     (aot :all true)
     ;; (sift :to-resource [#".*"]) ;; or this, if you don't want aot
     (gird :init-fn 'test-app.core/init)
-    (war)
+    (war :file "foo.war")
     (target)
     ))
 
