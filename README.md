@@ -11,7 +11,7 @@ applications to a WildFly container.
 
 The current version is:
 
-    [boot-immutant "0.5.0"]
+    [boot-immutant "0.6.0"]
 
 You'll need to add it as a test-scoped dependency in your
 `build.boot`:
@@ -20,7 +20,7 @@ You'll need to add it as a test-scoped dependency in your
 (set-env!
   :dependencies '[[org.clojure/clojure "1.8.0" :scope "provided"]
                   [org.immutant/web "2.1.3"]
-                  [boot-immutant "0.5.0" :scope "test"]]
+                  [boot-immutant "0.6.0" :scope "test"]]
   :source-paths #{"src" "test"})
 ```
 
